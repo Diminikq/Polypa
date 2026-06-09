@@ -238,21 +238,10 @@ int exec_opts(config_t *config, polynom_t *poly) {
         IntArr_init(&divisors);
 
         size_t nonzero_idx = trunc_zeroes(poly);
-
         
         if (!divs_factor(abs(poly->coeffs[nonzero_idx]), &divisors)){
             IntArr_free(&divisors);
             return 0;
-        }
-        if (divisors.size == 0 && nonzero_idx == 0) {
-            if (config->verbose_flag) {
-                printf("Polynomial has no integer roots\n");
-            }
-
-            else {
-                printf("None\n");
-            }
-            return 1;
         }
         
         IntArr_t roots;
@@ -264,6 +253,17 @@ int exec_opts(config_t *config, polynom_t *poly) {
             return 0;
         }
         
+        if (roots.size == 0 && nonzero_idx == 0) {
+            if (config->verbose_flag) {
+                printf("Polynomial has no integer roots\n");
+            }
+
+            else {
+                printf("None\n");
+            }
+            return 1;
+        }
+
         if (config->verbose_flag) {
             printf("P(x) = 0 <=> x = ");
         }
@@ -273,6 +273,9 @@ int exec_opts(config_t *config, polynom_t *poly) {
             printf("%d ", roots.data[idx]);
         }
         printf("\n");
+
+        IntArr_free(&divisors);
+        IntArr_free(&roots);
     }
 
     return 1;
