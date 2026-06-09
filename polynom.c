@@ -441,7 +441,12 @@ size_t get_max_pow(const char * const polynm_s) {
 
             else {
                 while (!isdigit(c)) {
-                    if (c == '\0') return max_pow;
+                    // case x\0, meaning power is 1
+                    if (c == '\0') {
+                        curr_pow = 1;
+                        CMP_ASSIGN_POW(curr_pow, max_pow);
+                        return max_pow;
+                    }
                     c = *poly_ptr++;
                 }
 
@@ -474,4 +479,14 @@ size_t get_max_pow(const char * const polynm_s) {
             break;
         }
     }
+}
+
+bool is_zero_polynomial(polynom_t *poly) {
+    if (!poly) return true;
+
+    for (size_t idx = 0; idx < poly->capacity; idx++){
+        if (poly->coeffs[idx] != 0) return false;
+    }
+    
+    return true;
 }

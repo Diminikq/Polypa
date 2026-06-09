@@ -5,6 +5,7 @@
 #include "polynom.h"
 #include "horner.h"
 #include "divisors.h"
+#include "roots.h"
 
 enum options {
     OPT_EVAL,
@@ -42,12 +43,11 @@ int parse_option(const char *st);
 void help_print(void);
 
 /* todo: 
-    -e [val] evaluate the polynomial at val
+    UNIX style => all args after -- polynomial
     -l [file] load from file
     -z find integer zeroes if exist
     -d divide by a linear term
     -f factor out the polynomial
-    -h help for options
 */
 int main(int argc, const char *argv[]){
 
@@ -70,8 +70,10 @@ int main(int argc, const char *argv[]){
         return 1;
     }
 
-    if (!exec_opts(&config, &poly)) return 1;
-
+    if (!exec_opts(&config, &poly)) {
+        fprintf(stderr, "Error executing options\n");
+        return 1;
+    }
 
     poly_free(&poly);
     return 0;
@@ -218,6 +220,59 @@ int exec_opts(config_t *config, polynom_t *poly) {
 
     if (config->zero_flag) {
 
+        // all coeffs are zero
+        if (is_zero_polynomial(poly)) {
+
+            if (config->verbose_flag) {
+                printf("P(x) = 0 <=> forall x (zero polynomial)\n");
+            }
+
+            else {
+                printf("All integers (zero polynomial)\n");
+            }
+
+            return 1;
+        }
+
+        IntArr_t divisors;
+        IntArr_init(&divisors);
+
+        size_t nonzero_idx = trunc_zeroes(poly);
+
+        
+        if (!divs_factor(abs(poly->coeffs[nonzero_idx]), &divisors)){
+            IntArr_free(&divisors);
+            return 0;
+        }
+        if (divisors.size == 0 && nonzero_idx == 0) {
+            if (config->verbose_flag) {
+                printf("Polynomial has no integer roots\n");
+            }
+
+            else {
+                printf("None\n");
+            }
+            return 1;
+        }
+        
+        IntArr_t roots;
+        IntArr_init(&roots);
+
+        if(!find_int_roots(poly, &divisors, &roots)) {
+            IntArr_free(&divisors);
+            IntArr_free(&roots);
+            return 0;
+        }
+        
+        if (config->verbose_flag) {
+            printf("P(x) = 0 <=> x = ");
+        }
+
+        for (size_t idx = 0; idx < roots.size; idx++) {
+
+            printf("%d ", roots.data[idx]);
+        }
+        printf("\n");
     }
 
     return 1;
