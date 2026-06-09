@@ -44,8 +44,12 @@ void help_print(void);
 
 /* todo: 
     UNIX style => all args after -- polynomial
+    horner divide
+    then divide repeatedly until roots are exhausted
+    for -z print roots
+    for -f print (x-roots) * remainder
+    for -d do just one horner division
     -l [file] load from file
-    -z find integer zeroes if exist
     -d divide by a linear term
     -f factor out the polynomial
 */
@@ -110,7 +114,7 @@ void help_print(void) {
         "-f = try to factor out the polynomial into linear terms\n"
         "-z = find integer roots of the polynomial\n"
         "-p = parse the polynomial into ascending power-ordered coefficient format\n"
-        "-v = verbose"
+        "-v = verbose\n"
         "-- [polynomial] = mark polynomial\n"
     );
 }
@@ -196,8 +200,8 @@ int exec_opts(config_t *config, polynom_t *poly) {
     if (!config || !poly) return 0;
 
     if (config->parse_flag) {
-        for (size_t idx = poly->capacity; idx > 0; idx--) {
-            printf("%d ", poly->coeffs[idx-1]);
+        for (size_t idx = 0; idx < poly->capacity; idx++) {
+            printf("%d ", poly->coeffs[idx]);
         }
         printf("\n");
     }
@@ -239,6 +243,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
 
         size_t nonzero_idx = trunc_zeroes(poly);
         
+        // memory error
         if (!divs_factor(abs(poly->coeffs[nonzero_idx]), &divisors)){
             IntArr_free(&divisors);
             return 0;
@@ -247,20 +252,24 @@ int exec_opts(config_t *config, polynom_t *poly) {
         IntArr_t roots;
         IntArr_init(&roots);
 
+        // memory error
         if(!find_int_roots(poly, &divisors, &roots)) {
             IntArr_free(&divisors);
             IntArr_free(&roots);
             return 0;
         }
         
+        // no roots
+        // nonzero_idx == 0 <=> absolute term != 0
+        // if abs. term !=0 then 0 is not a root
         if (roots.size == 0 && nonzero_idx == 0) {
+
             if (config->verbose_flag) {
                 printf("Polynomial has no integer roots\n");
             }
 
-            else {
-                printf("None\n");
-            }
+            else printf("None\n");
+
             return 1;
         }
 
@@ -268,6 +277,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
             printf("P(x) = 0 <=> x = ");
         }
 
+        // else print all roots
         for (size_t idx = 0; idx < roots.size; idx++) {
 
             printf("%d ", roots.data[idx]);

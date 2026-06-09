@@ -40,6 +40,7 @@ void poly_free(polynom_t *poly);
 int poly_resize(polynom_t *poly, size_t len);
 int poly_write(polynom_t *poly, term_t *term);
 int poly_resize_write(polynom_t *poly, term_t *term);
+int poly_alloc(polynom_t *poly, size_t len);
 
 size_t get_max_pow(const char * const polynm_s);
 int parse_polynom(const char * const polynom_s, polynom_t *poly);

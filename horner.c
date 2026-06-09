@@ -20,3 +20,10 @@ size_t trunc_zeroes(const polynom_t *poly) {
     
     return zero_cnt;
 }
+
+int horner_divide(const polynom_t *poly, int val, div_result_t *res) {
+    (void)res;
+    (void)val;
+    (void)poly;
+    return 1;
+}

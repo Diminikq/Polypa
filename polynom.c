@@ -48,6 +48,16 @@ int poly_maxpow_init(polynom_t *poly, const char * const poly_s) {
     return 1;
 }
 
+int poly_alloc(polynom_t *poly, size_t len) {
+    if (!poly) return 0;
+
+    poly->coeffs = malloc(len * sizeof(int));
+    if (!poly->coeffs) return 0;
+
+    poly->capacity = len;
+    return 1;
+}
+
 void poly_free(polynom_t *poly) {
     free(poly->coeffs);
     poly->capacity = 0;
