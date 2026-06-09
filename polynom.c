@@ -50,6 +50,7 @@ int poly_maxpow_init(polynom_t *poly, const char * const poly_s) {
 
 void poly_free(polynom_t *poly) {
     free(poly->coeffs);
+    poly->capacity = 0;
 }
 
 int poly_resize(polynom_t *poly, size_t new_capacity) {

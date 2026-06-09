@@ -8,3 +8,5 @@ int horner_eval(polynom_t *poly, int val) {
     }
     return result;
 }
+
+

@@ -3,7 +3,7 @@ CFLAGS = -Wall -Werror -Wextra -pedantic -std=c11
 
 .PHONY: clean
 
-polypa: polypa.o polynom.o horner.o
+polypa: polypa.o polynom.o horner.o divisors.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 polypa.o : polypa.c polynom.h horner.h
@@ -13,6 +13,9 @@ polynom.o: polynom.c polynom.h
 	$(CC) $(CFLAGS) -c $<	
 
 horner.o: horner.c horner.h polynom.h
+	$(CC) $(CFLAGS) -c $<
+
+divisors.o: divisors.c divisors.h
 	$(CC) $(CFLAGS) -c $<
 
 clean:
