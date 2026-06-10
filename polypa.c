@@ -46,16 +46,15 @@ int parse_option(const char *st);
 void help_print(void);
 
 /* todo: 
+    maybe command buffer to execute in input order
+    static bool first print
     UNIX style => all args after -- polynomial
     horner divide
     then divide repeatedly until roots are exhausted
     for -z print roots
     for -f print (x-roots) * remainder
     for -d do just one horner division
-    -l [file] load from file
-    -d divide by a linear term
     -f factor out the polynomial
-    -o a/d print order ascending/desc
 */
 int main(int argc, const char *argv[]){
 
@@ -224,11 +223,13 @@ int exec_opts(config_t *config, polynom_t *poly) {
     if (!config || !poly) return 0;
 
     if (config->parse_flag) {
+        printf("\n");
         print_polynom(poly, '\0', config->asc_order);
         printf("\n");
     }
 
     if (config->eval_flag) {
+        printf("\n");
         if (config->verbose_flag) {
             printf("P(%d) = ", config->eval_val);
         }
@@ -244,12 +245,17 @@ int exec_opts(config_t *config, polynom_t *poly) {
             return 0;
         }
 
+        printf("\n");
         horner_divide(poly, config->divide_val, &res);
 
         if (config->verbose_flag) {
-            //char var = first_variable_used(config->poly); // the first variable is the only one
+            char var = first_variable_used(config->poly); // the first variable is the only one
                                                             // else parser error earlier
-
+            printf("%s / ", config->poly);
+            print_linear(config->divide_flag, var);
+            printf(" = ");
+            print_polynom(&res.quotient, var, config->asc_order);
+            printf(" with the remainder of %d\n", res.remainder);
             
         }
 
@@ -265,11 +271,12 @@ int exec_opts(config_t *config, polynom_t *poly) {
     }
 
     if (config->factor_flag) {
-
+        if (is_zero_polynomial(poly)) return 1;
+        
     }
 
     if (config->zero_flag) {
-
+        printf("\n");
         // all coeffs are zero
         if (is_zero_polynomial(poly)) {
 
@@ -315,8 +322,8 @@ int exec_opts(config_t *config, polynom_t *poly) {
             }
 
             else printf("None\n");
-
-            return 1;
+            
+            goto exit;
         }
 
         if (config->verbose_flag) {
@@ -330,8 +337,9 @@ int exec_opts(config_t *config, polynom_t *poly) {
         }
         printf("\n");
 
-        IntArr_free(&divisors);
-        IntArr_free(&roots);
+        exit:
+            IntArr_free(&divisors);
+            IntArr_free(&roots);
     }
 
     return 1;

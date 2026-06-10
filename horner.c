@@ -55,3 +55,59 @@ void div_res_free(div_result_t *res) {
     free(res->quotient.coeffs);
     res->quotient.capacity = 0;
 }
+/*
+int horner_factor(const polynom_t *poly, factor_result_t *fact) {
+}
+*/
+int horner_normalise(const polynom_t *poly,
+                     polynom_t *normalized,
+                     root_t *root)
+{
+    if (!poly || !normalized)
+        return 0;
+
+    if (is_zero_polynomial(poly)) {
+        // define canonical zero polynomial
+        if (!poly_alloc(normalized, 1))
+            return 0;
+
+        normalized->coeffs[0] = 0;
+
+        if (root) {
+            root->root = 0;
+            root->multiplicity = poly->capacity; // or special value
+        }
+
+        return 1;
+    }
+
+    size_t zero_cnt = trunc_zeroes(poly);
+    size_t new_size = poly->capacity - zero_cnt;
+
+    if (!poly_alloc(normalized, new_size))
+        return 0;
+
+    for (size_t i = 0; i < new_size; i++) {
+        normalized->coeffs[i] = poly->coeffs[i + zero_cnt];
+    }
+
+    if (root && zero_cnt > 0) {
+        root->root = 0;
+        root->multiplicity = zero_cnt;
+    }
+
+    return 1;
+}
+
+int poly_copy(polynom_t *dst, const polynom_t *src)
+{
+    dst->capacity = src->capacity;
+
+    dst->coeffs = malloc(src->capacity * sizeof(int));
+    if (!dst->coeffs) return 0;
+
+    for (size_t i = 0; i < src->capacity; i++)
+        dst->coeffs[i] = src->coeffs[i];
+
+    return 1;
+}

@@ -12,7 +12,7 @@ polypa.o : polypa.c polynom.h horner.h
 polynom.o: polynom.c polynom.h
 	$(CC) $(CFLAGS) -c $<	
 
-horner.o: horner.c horner.h polynom.h divisors.h
+horner.o: horner.c horner.h polynom.h divisors.h roots.h
 	$(CC) $(CFLAGS) -c $<
 
 divisors.o: divisors.c divisors.h

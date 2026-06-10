@@ -491,7 +491,7 @@ size_t get_max_pow(const char * const polynm_s) {
     }
 }
 
-bool is_zero_polynomial(polynom_t *poly) {
+bool is_zero_polynomial(const polynom_t *poly) {
     if (!poly) return true;
 
     for (size_t idx = 0; idx < poly->capacity; idx++){
@@ -520,9 +520,11 @@ void print_polynom(polynom_t *poly, char var, bool ascd_order) {
     if (ascd_order) {
         if (isalpha(var)) {
 
+            // cap - 1 because the last term is not followed by +
             for (size_t idx = 0; idx < poly->capacity; idx ++) {
 
                 printf("%d%c^%zu", poly->coeffs[idx], var, idx);
+                if (idx < poly->capacity - 1) printf(" + ");
             }
 
         }
@@ -540,7 +542,8 @@ void print_polynom(polynom_t *poly, char var, bool ascd_order) {
         if (isalpha(var)) {
             for (size_t idx = poly->capacity; idx > 0; idx --) {
 
-                printf("%d%c^%zu", poly->coeffs[idx - 1], var, idx);
+                printf("%d%c^%zu", poly->coeffs[idx - 1], var, idx - 1);
+                if (idx > 1) printf(" + ");
             }
         }
 
