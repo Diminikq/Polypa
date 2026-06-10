@@ -48,4 +48,8 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly);
 bool is_var_uniq(char *ref, char *var);
 bool is_zero_polynomial(polynom_t *poly);
 
+void print_linear(int val, char var);
+void print_polynom(polynom_t *poly, char var, bool ascd_order);
+char first_variable_used(const char * s);
+
 #endif

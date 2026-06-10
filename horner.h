@@ -25,4 +25,7 @@ size_t trunc_zeroes(const polynom_t *poly);
 
 //int horner_zeroes(polynom_t *poly, int *divisors, int *zeroes);
 
+int div_res_alloc(size_t dividend_size, div_result_t *res);
+void div_res_free(div_result_t *res);
+
 #endif

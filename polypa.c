@@ -16,6 +16,7 @@ enum options {
     OPT_HELP,
     OPT_POLY,
     OPT_VERBOSE,
+    OPT_ORDER,
     OPT_UNKNOWN
 };
 
@@ -25,6 +26,8 @@ typedef struct {
 
     bool divide_flag;
     int divide_val;
+
+    bool asc_order; // printing order
 
     bool parse_flag;
     bool zero_flag;
@@ -52,6 +55,7 @@ void help_print(void);
     -l [file] load from file
     -d divide by a linear term
     -f factor out the polynomial
+    -o a/d print order ascending/desc
 */
 int main(int argc, const char *argv[]){
 
@@ -92,6 +96,7 @@ int parse_option(const char *st) {
     else if (strcmp(st, "-h") == 0) return OPT_HELP;
     else if (strcmp(st, "--") == 0) return OPT_POLY;
     else if (strcmp(st, "-v") == 0) return OPT_VERBOSE;
+    else if (strcmp(st, "-o") == 0) return OPT_ORDER;
     else return OPT_UNKNOWN;
 }
 
@@ -102,6 +107,7 @@ void config_init(config_t *config) {
     config->parse_flag = false;
     config->zero_flag = false;
     config->verbose_flag = false;
+    config->asc_order = true;
 
     config->poly = NULL;
 }
@@ -115,6 +121,7 @@ void help_print(void) {
         "-z = find integer roots of the polynomial\n"
         "-p = parse the polynomial into ascending power-ordered coefficient format\n"
         "-v = verbose\n"
+        "-o [a/d] = printing order specifier - ascending/descending\n"
         "-- [polynomial] = mark polynomial\n"
     );
 }
@@ -184,6 +191,23 @@ int configure(config_t *config, int argc, const char *argv[]) {
             config->verbose_flag = true;
             break;
 
+        case OPT_ORDER:
+            if (++arg >= argc) {
+                fprintf(stderr, "Missing order\n");
+                return 0;
+            }
+
+            char ord = argv[arg][0];
+
+            if (strlen(argv[arg]) > 1 || (ord != 'a' && ord != 'd')) {
+                fprintf(stderr, "invalid speicifier: %s\n", argv[arg]);
+                return 0;
+            }
+            
+            config->asc_order = (ord == 'a');
+
+            break;
+
         case OPT_UNKNOWN:
             fprintf(stderr, "unknown option: %s\n", argv[arg]);
             fprintf(stderr, "Rerun with -h for help\n");
@@ -200,9 +224,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
     if (!config || !poly) return 0;
 
     if (config->parse_flag) {
-        for (size_t idx = 0; idx < poly->capacity; idx++) {
-            printf("%d ", poly->coeffs[idx]);
-        }
+        print_polynom(poly, '\0', config->asc_order);
         printf("\n");
     }
 
@@ -215,7 +237,31 @@ int exec_opts(config_t *config, polynom_t *poly) {
     }
 
     if (config->divide_flag) {
-        
+        div_result_t res;
+
+        if (!div_res_alloc(poly->capacity, &res)) {
+            div_res_free(&res);
+            return 0;
+        }
+
+        horner_divide(poly, config->divide_val, &res);
+
+        if (config->verbose_flag) {
+            //char var = first_variable_used(config->poly); // the first variable is the only one
+                                                            // else parser error earlier
+
+            
+        }
+
+        else {
+            for (size_t i = 0; i < res.quotient.capacity; i++) {
+                printf("%d ", res.quotient.coeffs[i]);
+            }
+            printf("| ");
+            printf("%d\n", res.remainder);
+        }
+
+        div_res_free(&res);
     }
 
     if (config->factor_flag) {

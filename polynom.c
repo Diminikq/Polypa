@@ -500,3 +500,63 @@ bool is_zero_polynomial(polynom_t *poly) {
     
     return true;
 }
+
+void print_linear(int val, char var) {
+    if (val < 0) {
+        printf("(%c + %d)", var, -val);
+    }
+    else if (val == 0) {
+        printf("%c", var);
+    }
+    else {
+        printf("(%c - %d)", var, val);
+    }
+}
+
+// if var is not letter, print only coeffs
+void print_polynom(polynom_t *poly, char var, bool ascd_order) {
+    if (!poly) return;
+
+    if (ascd_order) {
+        if (isalpha(var)) {
+
+            for (size_t idx = 0; idx < poly->capacity; idx ++) {
+
+                printf("%d%c^%zu", poly->coeffs[idx], var, idx);
+            }
+
+        }
+
+        else {
+
+            for (size_t idx = 0; idx < poly->capacity; idx ++) {
+                printf("%d ", poly->coeffs[idx]);
+            }
+
+        }
+    }
+
+    else {
+        if (isalpha(var)) {
+            for (size_t idx = poly->capacity; idx > 0; idx --) {
+
+                printf("%d%c^%zu", poly->coeffs[idx - 1], var, idx);
+            }
+        }
+
+        else {
+            for (size_t idx = poly->capacity; idx > 0; idx --) {
+
+                printf("%d ", poly->coeffs[idx - 1]);
+            }
+        }
+        
+    }
+}
+
+char first_variable_used(const char * s) {
+    char c;
+    while ((c = *s++) != '\0' && !isalpha(c));
+    if (c == '\0') return 'x';
+    return c;
+}
