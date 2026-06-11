@@ -48,12 +48,12 @@ void help_print(void);
 /* todo: 
     maybe command buffer to execute in input order
     static bool first print
-    UNIX style => all args after -- polynomial
+    UNIX style => all args after -- polynomial -
+    make function that joins all argvs after -- has been detected
     horner divide
     then divide repeatedly until roots are exhausted
     for -z print roots
     for -f print (x-roots) * remainder
-    for -d do just one horner division
     -f factor out the polynomial
 */
 int main(int argc, const char *argv[]){

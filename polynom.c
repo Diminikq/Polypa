@@ -23,15 +23,11 @@ int sign_mul(char c) {
     return 1;
 }
 
-int poly_init(polynom_t *poly) {
-    if (!poly) return 0;
+void poly_init(polynom_t *poly) {
+    if (!poly) return;
 
-    poly->coeffs = calloc(1, sizeof(int));
-    if (!poly->coeffs)
-        return 0;
-
-    poly->capacity = 1;   // coeffs[0] exists
-    return 1;
+    poly->coeffs = NULL;
+    poly->capacity = 0;
 }
 
 int poly_maxpow_init(polynom_t *poly, const char * const poly_s) {
