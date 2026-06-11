@@ -1,3 +1,7 @@
+/**
+ * Author: Dominik Makuka
+ * VUT FIT Brno
+ */
 
 #include "divisors.h"
 

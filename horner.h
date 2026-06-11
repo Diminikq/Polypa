@@ -1,3 +1,8 @@
+/**
+ * Author: Dominik Makuka
+ * VUT FIT Brno
+ */
+
 #ifndef HORNER_H
 #define HORNER_H
 

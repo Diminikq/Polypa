@@ -1,3 +1,8 @@
+/**
+ * Author: Dominik Makuka
+ * VUT FIT Brno
+ */
+
 #include "horner.h"
 
 int horner_eval(const polynom_t *poly, int val) {
@@ -147,7 +152,7 @@ int horner_factor(const polynom_t *poly,
     poly_copy(&fact->remainder, &current);
     // shrink the result to avoid printing zeroes without realloc
     fact->remainder.capacity = current.capacity;
-    
+
     poly_free(&current);
     return 1;
 

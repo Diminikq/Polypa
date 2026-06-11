@@ -1,3 +1,8 @@
+/**
+ * Author: Dominik Makuka
+ * VUT FIT Brno
+ */
+
 
 #ifndef ROOTS_H
 #define ROOTS_H

@@ -1,3 +1,8 @@
+/**
+ * Author: Dominik Makuka
+ * VUT FIT Brno
+ */
+
 #include "polynom.h"
 
 enum state {

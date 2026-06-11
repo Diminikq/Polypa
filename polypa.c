@@ -1,3 +1,8 @@
+/**
+ * Author: Dominik Makuka
+ * VUT FIT Brno
+ */
+
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -55,12 +60,6 @@ void help_print(void);
 
     UNIX style => all args after -- polynomial -
     make function that joins all argvs after -- has been detected
-    
-    horner divide
-    then divide repeatedly until roots are exhausted
-    for -z print roots
-    for -f print (x-roots) * remainder
-    -f factor out the polynomial
 */
 int main(int argc, const char *argv[]){
 
@@ -228,8 +227,10 @@ int configure(config_t *config, int argc, const char *argv[]) {
 int exec_opts(config_t *config, polynom_t *poly) {
     if (!config || !poly) return 0;
 
-    char var = first_variable_used(config->poly); // the first variable is the only one
-                                                            // else parser error earlier
+    // the first variable is the only one
+    // else parser error earlier
+    char var = first_variable_used(config->poly);
+    
 
     if (config->parse_flag) {
         printf("\n");
@@ -279,6 +280,27 @@ int exec_opts(config_t *config, polynom_t *poly) {
     if (config->factor_flag || config->zero_flag) {
         if (is_zero_polynomial(poly)) {
 
+            if (config->factor_flag) {
+                if (config->verbose_flag) {
+                    printf("Zero polynomial: all divide it\n");
+                }
+
+                else {
+                    printf("0\n");
+                }
+            }
+
+            if (config->zero_flag) {
+                if (config->verbose_flag) {
+                    printf("P(x) = 0 <=> forall x (zero polynomial)\n");
+                }
+
+                else {
+                    printf("All integers (zero polynomial)\n");
+                }
+            }
+
+            return 1;
         }
 
         // will store normalized polynomial
@@ -306,7 +328,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
 
         if (!divs_factor(const_term, &divisors)) goto fz_error;
 
-        if (!horner_factor(poly, &divisors, &res)) goto fz_error;
+        if (!horner_factor(&normalized, &divisors, &res)) goto fz_error;
 
         if (config->factor_flag) {
 

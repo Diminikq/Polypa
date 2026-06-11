@@ -1,3 +1,8 @@
+/**
+ * Author: Dominik Makuka
+ * VUT FIT Brno
+ */
+
 #ifndef POLYNOM_H
 #define POLYNOM_H
 

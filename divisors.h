@@ -1,3 +1,8 @@
+/**
+ * Author: Dominik Makuka
+ * VUT FIT Brno
+ */
+
 #ifndef DIVISORS_H
 #define DIVISORS_H
 
@@ -8,6 +13,7 @@ typedef struct IntArr {
     size_t size;
     size_t cpcity;
 } IntArr_t;
+
 
 void IntArr_init(IntArr_t *int_arr);
 int IntArr_resize(IntArr_t *int_arr, size_t new_size);

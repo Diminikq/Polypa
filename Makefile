@@ -1,3 +1,8 @@
+##########################
+# Author: Dominik Makuka
+# VUT FIT Brno
+
+
 CC = clang 
 CFLAGS = -Wall -Werror -Wextra -pedantic -std=c11
 
