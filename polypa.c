@@ -228,6 +228,9 @@ int configure(config_t *config, int argc, const char *argv[]) {
 int exec_opts(config_t *config, polynom_t *poly) {
     if (!config || !poly) return 0;
 
+    char var = first_variable_used(config->poly); // the first variable is the only one
+                                                            // else parser error earlier
+
     if (config->parse_flag) {
         printf("\n");
         print_polynom(poly, '\0', config->asc_order);
@@ -255,8 +258,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
         horner_divide(poly, config->divide_val, &res);
 
         if (config->verbose_flag) {
-            char var = first_variable_used(config->poly); // the first variable is the only one
-                                                            // else parser error earlier
+            
             printf("(%s) / ", config->poly);
             print_linear(config->divide_flag, var);
             printf(" = ");
@@ -274,53 +276,63 @@ int exec_opts(config_t *config, polynom_t *poly) {
         div_res_free(&res);
     }
 
-
-    if (config->factor_flag) {
-        if (is_zero_polynomial(poly)) return 1;
-        
-    }
-
-    if (config->zero_flag) {
-        printf("\n");
-        // all coeffs are zero
+    if (config->factor_flag || config->zero_flag) {
         if (is_zero_polynomial(poly)) {
 
-            if (config->verbose_flag) {
-                printf("P(x) = 0 <=> forall x (zero polynomial)\n");
-            }
-
-            else {
-                printf("All integers (zero polynomial)\n");
-            }
-
-            return 1;
         }
 
+        // will store normalized polynomial
+        polynom_t normalized;
+
+        // will store constant term divisors
         IntArr_t divisors;
         IntArr_init(&divisors);
 
-        size_t nonzero_idx = trunc_zeroes(poly);
-        
-        // memory error
-        if (!divs_factor(abs(poly->coeffs[nonzero_idx]), &divisors)){
-            IntArr_free(&divisors);
-            return 0;
-        }
-        
-        IntArr_t roots;
-        IntArr_init(&roots);
+        // will store division result
+        factor_result_t res;
+        factor_result_init(&res);
 
-        // memory error
-        if(!find_int_roots(poly, &divisors, &roots)) {
-            IntArr_free(&divisors);
-            IntArr_free(&roots);
-            return 0;
-        }
+        // there can be at most max deg roots, thats why capacity
+        // could be done by reallocing, but slower
+        if (!root_pair_alloc(&res.root_pairs, poly->capacity)) goto fz_error;
+
+        // normalize poly, write the multiplicity of 0 if > 0;
+        if (!horner_normalize(poly, &normalized, &res.root_pairs)) goto fz_error;
+
+        // alloc space for remainder
+        if (!poly_alloc(&res.remainder, normalized.capacity)) goto fz_error;
+
+        unsigned const_term = abs(normalized.coeffs[0]);
+
+        if (!divs_factor(const_term, &divisors)) goto fz_error;
+
+        if (!horner_factor(poly, &divisors, &res)) goto fz_error;
+
+        if (config->factor_flag) {
+
+            printf("\n");
+
+            if (config->verbose_flag) {
+                printf("%s = ", config->poly);
+            }
+            
+            for (size_t idx = 0; idx < res.root_pairs.root_pairs_size; idx++) {
+                print_linear(res.root_pairs.pairs[idx].root, var);
+                printf("^%zu", res.root_pairs.pairs[idx].multiplicity);
+            }
+
+            print_polynom(&res.remainder, var, config->asc_order);
+
+            printf("\n");
+            printf("\n");
         
-        // no roots
-        // nonzero_idx == 0 <=> absolute term != 0
-        // if abs. term !=0 then 0 is not a root
-        if (roots.size == 0 && nonzero_idx == 0) {
+        }
+
+        if (config->zero_flag) {
+
+            printf("\n");
+
+            if (res.root_pairs.root_pairs_size == 0) {
 
             if (config->verbose_flag) {
                 printf("Polynomial has no integer roots\n");
@@ -328,7 +340,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
 
             else printf("None\n");
             
-            goto exit;
+            goto fz_exit;
         }
 
         if (config->verbose_flag) {
@@ -336,15 +348,26 @@ int exec_opts(config_t *config, polynom_t *poly) {
         }
 
         // else print all roots
-        for (size_t idx = 0; idx < roots.size; idx++) {
+        for (size_t idx = 0; idx < res.root_pairs.root_pairs_size; idx++) {
 
-            printf("%d ", roots.data[idx]);
+            printf("%d ", res.root_pairs.pairs[idx].root);
         }
         printf("\n");
+        }
 
-        exit:
+        goto fz_exit;
+
+        fz_error:
+            poly_free(&normalized);
             IntArr_free(&divisors);
-            IntArr_free(&roots);
+            factor_result_free(&res);
+
+            return 0;
+
+        fz_exit:
+            poly_free(&normalized);
+            IntArr_free(&divisors);
+            factor_result_free(&res);
     }
 
     return 1;

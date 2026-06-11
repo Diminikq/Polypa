@@ -1,3 +1,6 @@
 *.o
 
 polypa
+
+test.c
+test

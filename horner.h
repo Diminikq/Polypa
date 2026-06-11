@@ -25,11 +25,11 @@ typedef struct root_pairs {
 
 // remainder, 
 typedef struct {
-    root_pairs_t *root_pairs;
+    root_pairs_t root_pairs;
     polynom_t remainder;
 } factor_result_t;
 
-int horner_normalise(const polynom_t *poly, polynom_t *normalized, root_t *root);
+int horner_normalize(const polynom_t *poly, polynom_t *normalized, root_pairs_t *pairs);
 
 int horner_eval(const polynom_t *poly, int val);
 
@@ -45,9 +45,13 @@ size_t trunc_zeroes(const polynom_t *poly);
 int div_res_alloc(size_t dividend_size, div_result_t *res);
 void div_res_free(div_result_t *res);
 
+void root_pair_init(root_pairs_t *pairs);
 int root_pair_append(root_pairs_t *pairs, size_t muliplic, int root);
 int root_pair_alloc(root_pairs_t *pairs, size_t cpcity);
 void root_pair_free(root_pairs_t *pairs);
+
+void factor_result_init(factor_result_t *res);
+void factor_result_free(factor_result_t *res);
 
 
 #endif

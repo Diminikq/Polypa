@@ -10,7 +10,7 @@ int horner_eval(const polynom_t *poly, int val) {
 }
 
 size_t trunc_zeroes(const polynom_t *poly) {
-    if (!poly) return 0;
+    if (!poly || !poly->coeffs) return 0;
 
     size_t zero_cnt = 0;
 
@@ -21,8 +21,7 @@ size_t trunc_zeroes(const polynom_t *poly) {
     return zero_cnt;
 }
 
-int horner_divide(const polynom_t *poly, int val, div_result_t *res)
-{
+int horner_divide(const polynom_t *poly, int val, div_result_t *res) {
     if (!poly || !poly->coeffs || !res || !res->quotient.coeffs)
         return 0;
 
@@ -47,8 +46,7 @@ int horner_divide(const polynom_t *poly, int val, div_result_t *res)
     return 1;
 }
 
-int div_res_alloc(size_t dividend_capacity, div_result_t *res)
-{
+int div_res_alloc(size_t dividend_capacity, div_result_t *res) {
     if (!res || dividend_capacity == 0)
         return 0;
 
@@ -88,9 +86,11 @@ int try_extract_root(polynom_t *current, int d, size_t *mult) {
 
         if (divtmp.remainder != 0)
             break;
-
+        
         poly_copy(current, &divtmp.quotient);
+        current->capacity--;
         ++multiplic;
+        
     }
 
     if (mult)
@@ -127,7 +127,7 @@ int horner_factor(const polynom_t *poly,
             goto error;
 
         if (multiplic > 0) {
-            if (!root_pair_append(fact->root_pairs,
+            if (!root_pair_append(&fact->root_pairs,
                                   multiplic,
                                   div))
                 goto error;
@@ -137,7 +137,7 @@ int horner_factor(const polynom_t *poly,
             goto error;
 
         if (multiplic > 0) {
-            if (!root_pair_append(fact->root_pairs,
+            if (!root_pair_append(&fact->root_pairs,
                                   multiplic,
                                   -div))
                 goto error;
@@ -145,6 +145,9 @@ int horner_factor(const polynom_t *poly,
     }
 
     poly_copy(&fact->remainder, &current);
+    // shrink the result to avoid printing zeroes without realloc
+    fact->remainder.capacity = current.capacity;
+    
     poly_free(&current);
     return 1;
 
@@ -153,9 +156,9 @@ error:
     return 0;
 }
 
-int horner_normalise(const polynom_t *poly,
+int horner_normalize(const polynom_t *poly,
                      polynom_t *normalized,
-                     root_t *root)
+                     root_pairs_t *pairs)
 {
     if (!poly || !normalized)
         return 0;
@@ -167,10 +170,10 @@ int horner_normalise(const polynom_t *poly,
 
         normalized->coeffs[0] = 0;
 
-        if (root) {
-            root->root = 0;
-            root->multiplicity = poly->capacity; // or special value
-        }
+        if(!root_pair_append(pairs, poly->capacity, 0)){
+            root_pair_free(pairs);
+            return 0;
+        }  
 
         return 1;
     }
@@ -185,15 +188,25 @@ int horner_normalise(const polynom_t *poly,
         normalized->coeffs[i] = poly->coeffs[i + zero_cnt];
     }
 
-    if (root && zero_cnt > 0) {
-        root->root = 0;
-        root->multiplicity = zero_cnt;
+    if (pairs && zero_cnt > 0) {
+        if(!root_pair_append(pairs, zero_cnt, 0)){
+            root_pair_free(pairs);
+            return 0;
+        }        
     }
 
     return 1;
 }
 
-int root_pair_append(root_pairs_t *pairs, size_t muliplic, int root) {
+void root_pair_init(root_pairs_t *pairs) {
+    if(!pairs) return;
+
+    pairs->pairs = NULL;
+    pairs->root_pairs_cpcity = 0;
+    pairs->root_pairs_size = 0;
+}
+
+int root_pair_append(root_pairs_t *pairs, size_t multiplic, int root) {
     if (!pairs) return 0;
 
     if (pairs->root_pairs_size == pairs->root_pairs_cpcity) {
@@ -207,17 +220,16 @@ int root_pair_append(root_pairs_t *pairs, size_t muliplic, int root) {
     }
 
     pairs->pairs[pairs->root_pairs_size].root = root;
-    pairs->pairs[pairs->root_pairs_size].multiplicity = muliplic;
+    pairs->pairs[pairs->root_pairs_size].multiplicity = multiplic;
     ++pairs->root_pairs_size;
     
     return 1;
 }
 
-int root_pair_alloc(root_pairs_t *pairs, size_t capacity)
-{
-    if (!pairs) return 0;
+int root_pair_alloc(root_pairs_t *pairs, size_t capacity) {
+    //if (!pairs) return 0;
 
-    pairs->pairs = malloc(capacity * sizeof(root_t));
+    pairs->pairs = calloc(capacity, sizeof(root_t));
     if (!pairs->pairs) {
         pairs->root_pairs_cpcity = 0;
         pairs->root_pairs_size = 0;
@@ -237,4 +249,20 @@ void root_pair_free(root_pairs_t *pairs) {
     pairs->pairs = NULL;
     pairs->root_pairs_cpcity = 0;
     pairs->root_pairs_size = 0;
+}
+
+void factor_result_init(factor_result_t *res) {
+    if (!res) return;
+
+    res->remainder.coeffs = NULL;
+    res->remainder.capacity = 0;
+
+    root_pair_init(&res->root_pairs);
+}
+
+void factor_result_free(factor_result_t *res) {
+    if (!res) return;
+
+    poly_free(&res->remainder);
+    root_pair_free(&res->root_pairs);
 }

@@ -28,6 +28,7 @@ int sign_mul(char c) {
 // 0x^0, size (capacity) 1
 int poly_init(polynom_t *poly) {
     if (!poly) return 0;
+
     poly->coeffs = calloc(1, sizeof(int));
     if (!poly->coeffs) return 0;
 
@@ -112,7 +113,7 @@ int poly_resize_write(polynom_t *poly, term_t *term) {
 int poly_copy(polynom_t *dst, const polynom_t *src) {
     if (!dst || !src) return 0;
     
-    if (dst->capacity != src->capacity) return 0;
+    if (dst->capacity < src->capacity) return 0;
 
 
     for (size_t i = 0; i < src->capacity; i++)
@@ -534,12 +535,14 @@ void print_polynom(polynom_t *poly, char var, bool ascd_order) {
     if (ascd_order) {
         if (isalpha(var)) {
 
+            printf("(");
             // cap - 1 because the last term is not followed by +
             for (size_t idx = 0; idx < poly->capacity; idx ++) {
-
+                
                 printf("%d%c^%zu", poly->coeffs[idx], var, idx);
                 if (idx < poly->capacity - 1) printf(" + ");
             }
+            printf(")");
 
         }
 
@@ -554,11 +557,13 @@ void print_polynom(polynom_t *poly, char var, bool ascd_order) {
 
     else {
         if (isalpha(var)) {
+            printf("(");
             for (size_t idx = poly->capacity; idx > 0; idx --) {
 
                 printf("%d%c^%zu", poly->coeffs[idx - 1], var, idx - 1);
                 if (idx > 1) printf(" + ");
             }
+            printf(")");
         }
 
         else {
