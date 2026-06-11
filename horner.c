@@ -21,109 +21,136 @@ size_t trunc_zeroes(const polynom_t *poly) {
     return zero_cnt;
 }
 
-int horner_divide(const polynom_t *poly, int val, div_result_t *res) {
-    if (!poly || !res) return 0;
+int horner_divide(const polynom_t *poly, int val, div_result_t *res)
+{
+    if (!poly || !poly->coeffs || !res || !res->quotient.coeffs)
+        return 0;
 
-    size_t res_capacity = poly->capacity - 1; 
-    int result = poly->coeffs[res_capacity];
+    if (poly->capacity == 0)
+        return 0;
 
-    for (size_t idx = res_capacity; idx > 0; idx--) {
-        if (res->quotient.coeffs && idx <= res->quotient.capacity) {
-            res->quotient.coeffs[idx - 1] = result;
-        }
+    if (res->quotient.capacity < poly->capacity - 1)
+        return 0;
 
-        result = result * val + poly->coeffs[idx - 1];
-        
-    }
     
+    size_t last = poly->capacity - 1;
+
+    int result = poly->coeffs[last];
+
+    for (size_t i = last; i > 0; i--) {
+        res->quotient.coeffs[i - 1] = result;
+        result = result * val + poly->coeffs[i - 1];
+    }
+
     res->remainder = result;
 
     return 1;
 }
 
-int div_res_alloc(size_t dividend_capaciy, div_result_t *res) {
-    size_t res_capacity = dividend_capaciy - 1;
+int div_res_alloc(size_t dividend_capacity, div_result_t *res)
+{
+    if (!res || dividend_capacity == 0)
+        return 0;
 
-    res->quotient.coeffs = malloc(res_capacity * sizeof(int));
-    if (!res->quotient.coeffs) return 0;
+    // if dividend is a constant, the result will be a constant
+    size_t res_capacity = dividend_capacity == 1 ? 1 : dividend_capacity - 1;
+
+    res->quotient.coeffs = calloc(res_capacity, sizeof(int));
+    if (!res->quotient.coeffs)
+        return 0;
 
     res->quotient.capacity = res_capacity;
+    res->remainder = 0;
+
     return 1;
 }
 
 void div_res_free(div_result_t *res) {
     free(res->quotient.coeffs);
+    res->quotient.coeffs = NULL;
     res->quotient.capacity = 0;
+    res->remainder = 0;
 }
 
 // divide fact.remainder by d
-int try_extract_root(const polynom_t *poly, factor_result_t *fact, int d, size_t *mult) {
-    if (!poly || !fact) return 0;
-
-    div_result_t res;
-    if (!div_res_alloc(poly->capacity, &res)) {
-        div_res_free(&res);
-        return 0;
-    }
+int try_extract_root(polynom_t *current, int d, size_t *mult) {
+    if (!current) return 0;
 
     size_t multiplic = 0;
-    while (horner_eval(&res.quotient, d) == 0) {
-            if (!horner_divide(&res.quotient, d, &fact->remainder)) goto err;
-            if (!poly_copy(&res.quotient, &fact->remainder)) goto err;
-            multiplic ++;
-    }
-    if (mult) {
-        *mult = multiplic;
-    }
-    goto exit;
-    err:
-        div_res_free(&res);
+
+    div_result_t divtmp;
+    if (!div_res_alloc(current->capacity, &divtmp))
         return 0;
-    exit:
-        div_res_free(&res);
-        return 1;
+
+    while (1) {
+        if (!horner_divide(current, d, &divtmp))
+            goto error;
+
+        if (divtmp.remainder != 0)
+            break;
+
+        poly_copy(current, &divtmp.quotient);
+        ++multiplic;
+    }
+
+    if (mult)
+        *mult = multiplic;
+
+    div_res_free(&divtmp);
+    return 1;
+
+error:
+    div_res_free(&divtmp);
+    return 0;
 }
 
 // allocates fact as needed
-int horner_factor(const polynom_t *poly, IntArr_t *candidates, factor_result_t *fact) {
-    if (!poly || !candidates || !fact) return 0;
-
-    size_t poly_maxdeg = poly->capacity - 1;
-    
-    // there can be at most poly_degree roots
-    if (!root_pair_alloc(fact->root_pairs, poly_maxdeg)) {
-        root_pair_free(fact->root_pairs);
+int horner_factor(const polynom_t *poly,
+                  IntArr_t *candidates,
+                  factor_result_t *fact)
+{
+    if (!poly || !candidates || !fact)
         return 0;
-    }
 
+    polynom_t current;
+    if (!poly_alloc(&current, poly->capacity))
+        return 0;
 
-    size_t multiplic;
-    int div;
-    for (size_t d = 0; d < candidates->size; d++) {
+    poly_copy(&current, poly);
 
-        multiplic = 0;
-        div = candidates->data[d];
-        
-        if (!try_extract_root(poly, fact, div, &multiplic)) goto error;
-        
+    for (size_t i = 0; i < candidates->size; ++i) {
+
+        int div = candidates->data[i];
+        size_t multiplic;
+
+        if (!try_extract_root(&current, div, &multiplic))
+            goto error;
+
         if (multiplic > 0) {
-            if(!root_pair_append(&fact->root_pairs, multiplic, div)) goto error;
+            if (!root_pair_append(fact->root_pairs,
+                                  multiplic,
+                                  div))
+                goto error;
         }
 
-        if (!try_extract_root(poly, fact, -div, &multiplic)) goto error;
-        
+        if (!try_extract_root(&current, -div, &multiplic))
+            goto error;
+
         if (multiplic > 0) {
-            if(!root_pair_append(&fact->root_pairs, multiplic, -div)) goto error;
+            if (!root_pair_append(fact->root_pairs,
+                                  multiplic,
+                                  -div))
+                goto error;
         }
     }
-    goto exit;
 
-    error:
-        root_pair_free(fact->root_pairs);
-        return 0;
-    exit:
-        root_pair_free(fact->root_pairs);
-        return 1;
+    poly_copy(&fact->remainder, &current);
+    poly_free(&current);
+    return 1;
+
+error:
+    poly_free(&current);
+    return 0;
 }
 
 int horner_normalise(const polynom_t *poly,
@@ -166,17 +193,6 @@ int horner_normalise(const polynom_t *poly,
     return 1;
 }
 
-int poly_copy(polynom_t *dst, const polynom_t *src)
-{
-    if (dst->capacity != src->capacity) return 0;
-
-
-    for (size_t i = 0; i < src->capacity; i++)
-        dst->coeffs[i] = src->coeffs[i];
-
-    return 1;
-}
-
 int root_pair_append(root_pairs_t *pairs, size_t muliplic, int root) {
     if (!pairs) return 0;
 
@@ -197,12 +213,20 @@ int root_pair_append(root_pairs_t *pairs, size_t muliplic, int root) {
     return 1;
 }
 
-int root_pair_alloc(root_pairs_t *pairs, size_t cpcity) {
+int root_pair_alloc(root_pairs_t *pairs, size_t capacity)
+{
     if (!pairs) return 0;
 
-    pairs->pairs = malloc(cpcity * sizeof(root_t));
-    if (!pairs->pairs) return 0;
-    pairs->root_pairs_cpcity = cpcity;
+    pairs->pairs = malloc(capacity * sizeof(root_t));
+    if (!pairs->pairs) {
+        pairs->root_pairs_cpcity = 0;
+        pairs->root_pairs_size = 0;
+        return 0;
+    }
+
+    pairs->root_pairs_cpcity = capacity;
+    pairs->root_pairs_size = 0;
+
     return 1;
 }
 
@@ -210,6 +234,7 @@ void root_pair_free(root_pairs_t *pairs) {
     if (!pairs) return;
 
     free(pairs->pairs);
+    pairs->pairs = NULL;
     pairs->root_pairs_cpcity = 0;
     pairs->root_pairs_size = 0;
 }

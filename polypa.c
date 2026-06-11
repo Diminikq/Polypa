@@ -45,11 +45,17 @@ int exec_opts(config_t * config, polynom_t *poly);
 int parse_option(const char *st);
 void help_print(void);
 
-/* todo: 
+/* todo:
+    in divide, print_polynomial instead of string
+    only after print_polynomial works imlicitly
+
     maybe command buffer to execute in input order
+
     static bool first print
+
     UNIX style => all args after -- polynomial -
     make function that joins all argvs after -- has been detected
+    
     horner divide
     then divide repeatedly until roots are exhausted
     for -z print roots
@@ -116,9 +122,9 @@ void help_print(void) {
     printf(
         "-e [value] = evaluate polynomial at value\n"
         "-d [value] = divide polynomial by (x-value) linear term\n"
-        "-f = try to factor out the polynomial into linear terms\n"
-        "-z = find integer roots of the polynomial\n"
-        "-p = parse the polynomial into ascending power-ordered coefficient format\n"
+        "-f = try to factor out polynomial into linear terms\n"
+        "-z = find integer roots of polynomial\n"
+        "-p = parse polynomial into (implicitly ascending) power-ordered coefficient format\n"
         "-v = verbose\n"
         "-o [a/d] = printing order specifier - ascending/descending\n"
         "-- [polynomial] = mark polynomial\n"
@@ -146,7 +152,7 @@ int configure(config_t *config, int argc, const char *argv[]) {
             }
             config->eval_val = strtol(argv[arg], &junk, 10); // base 10
             if (*junk != '\0') {
-                fprintf(stderr, "NAN: %s\n", argv[arg]);
+                fprintf(stderr, "Not INT: %s\n", argv[arg]);
                 return 0;
             }
             break;
@@ -164,7 +170,7 @@ int configure(config_t *config, int argc, const char *argv[]) {
             }
             config->divide_val = strtol(argv[arg], &junk, 10); // base 10
             if (*junk != '\0') {
-                fprintf(stderr, "NAN: %s\n", argv[arg]);
+                fprintf(stderr, "Not INT: %s\n", argv[arg]);
                 return 0;
             }
             break;
@@ -251,7 +257,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
         if (config->verbose_flag) {
             char var = first_variable_used(config->poly); // the first variable is the only one
                                                             // else parser error earlier
-            printf("%s / ", config->poly);
+            printf("(%s) / ", config->poly);
             print_linear(config->divide_flag, var);
             printf(" = ");
             print_polynom(&res.quotient, var, config->asc_order);
@@ -260,15 +266,14 @@ int exec_opts(config_t *config, polynom_t *poly) {
         }
 
         else {
-            for (size_t i = 0; i < res.quotient.capacity; i++) {
-                printf("%d ", res.quotient.coeffs[i]);
-            }
+            print_polynom(&res.quotient, '\0', config->asc_order);
             printf("| ");
             printf("%d\n", res.remainder);
         }
 
         div_res_free(&res);
     }
+
 
     if (config->factor_flag) {
         if (is_zero_polynomial(poly)) return 1;

@@ -36,8 +36,7 @@ int horner_eval(const polynom_t *poly, int val);
 int horner_divide(const polynom_t *poly, int val, div_result_t *res);
 int horner_factor(const polynom_t *poly, IntArr_t *candidates, factor_result_t *fact);
 
-int try_extract_root(const polynom_t *poly, factor_result_t *fact, int d, size_t *mult);
-int copy_poly(polynom_t *dst, const polynom_t *src);
+int try_extract_root(polynom_t *current, int d, size_t *mult);
 
 size_t trunc_zeroes(const polynom_t *poly);
 

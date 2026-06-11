@@ -23,11 +23,16 @@ int sign_mul(char c) {
     return 1;
 }
 
-void poly_init(polynom_t *poly) {
-    if (!poly) return;
+// allocate a polynomial
+// empty polynomial is the zero polynomial
+// 0x^0, size (capacity) 1
+int poly_init(polynom_t *poly) {
+    if (!poly) return 0;
+    poly->coeffs = calloc(1, sizeof(int));
+    if (!poly->coeffs) return 0;
 
-    poly->coeffs = NULL;
-    poly->capacity = 0;
+    poly->capacity = 1;
+    return 1;
 }
 
 int poly_maxpow_init(polynom_t *poly, const char * const poly_s) {
@@ -47,7 +52,7 @@ int poly_maxpow_init(polynom_t *poly, const char * const poly_s) {
 int poly_alloc(polynom_t *poly, size_t len) {
     if (!poly) return 0;
 
-    poly->coeffs = malloc(len * sizeof(int));
+    poly->coeffs = calloc(len, sizeof(int));
     if (!poly->coeffs) return 0;
 
     poly->capacity = len;
@@ -56,6 +61,7 @@ int poly_alloc(polynom_t *poly, size_t len) {
 
 void poly_free(polynom_t *poly) {
     free(poly->coeffs);
+    poly->coeffs = NULL;
     poly->capacity = 0;
 }
 
@@ -100,6 +106,18 @@ int poly_resize_write(polynom_t *poly, term_t *term) {
     }
 
     poly->coeffs[term->pow] += term->sign * term->coeff;
+    return 1;
+}
+
+int poly_copy(polynom_t *dst, const polynom_t *src) {
+    if (!dst || !src) return 0;
+    
+    if (dst->capacity != src->capacity) return 0;
+
+
+    for (size_t i = 0; i < src->capacity; i++)
+        dst->coeffs[i] = src->coeffs[i];
+
     return 1;
 }
 

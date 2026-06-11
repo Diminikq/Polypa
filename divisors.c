@@ -49,6 +49,7 @@ int IntArr_resize(IntArr_t *int_arr, size_t new_size) {
 
 void IntArr_free(IntArr_t *int_arr) {
     free(int_arr->data);
+    int_arr->data = NULL;
     int_arr->cpcity = 0;
     int_arr->size = 0;
 }
