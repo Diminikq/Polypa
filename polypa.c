@@ -39,7 +39,7 @@ typedef struct {
     bool factor_flag;
     bool verbose_flag;
 
-    const char *poly;
+    char *poly;
 } config_t;
 
 void config_init(config_t *config);
@@ -50,18 +50,22 @@ int exec_opts(config_t * config, polynom_t *poly);
 int parse_option(const char *st);
 void help_print(void);
 
+char* concat_args(int arg_start, int argc, const char *argv[]);
+
 /* todo:
     in divide, print_polynomial instead of string
     only after print_polynomial works imlicitly
 
-    maybe command buffer to execute in input order
+    space is treated as error in parser, fix
 
     static bool first print
-
-    UNIX style => all args after -- polynomial -
-    make function that joins all argvs after -- has been detected
 */
 int main(int argc, const char *argv[]){
+
+    if (argc == 1) {
+        printf("Nothing to do, rerun with -h for help \n");
+        return 0;
+    }
 
     config_t config;
     config_init(&config);
@@ -74,21 +78,28 @@ int main(int argc, const char *argv[]){
     if (!config.poly) return 1;
 
     polynom_t poly;
+    poly_init(&poly);
 
-    if (!poly_maxpow_init(&poly, config.poly)) return 1;
-    
-    if (!parse_polynom(config.poly, &poly)) {
-        poly_free(&poly);
-        return 1;
-    }
+    if (!poly_maxpow_init(&poly, config.poly)) goto m_error;
+
+    if (!parse_polynom(config.poly, &poly)) goto m_error;
 
     if (!exec_opts(&config, &poly)) {
         fprintf(stderr, "Error executing options\n");
-        return 1;
+        goto m_error;
     }
 
-    poly_free(&poly);
-    return 0;
+    goto m_exit;
+
+    m_error:
+        poly_free(&poly);
+        free(config.poly);
+        return 1;
+    
+    m_exit:
+        poly_free(&poly);
+        free(config.poly);
+        return 0;
 }
 
 int parse_option(const char *st) {
@@ -188,8 +199,12 @@ int configure(config_t *config, int argc, const char *argv[]) {
                 fprintf(stderr, "Missing polynomial\n");
                 return 0;
             }
-            config->poly = argv[arg];
-            break;
+            config->poly = concat_args(arg, argc, argv);
+            if (!config->poly) {
+                free(config->poly);
+                return 0;
+            }
+            return 1;
         
         case OPT_VERBOSE:
             config->verbose_flag = true;
@@ -393,4 +408,29 @@ int exec_opts(config_t *config, polynom_t *poly) {
     }
 
     return 1;
+}
+
+char *concat_args(int arg_start, int argc, const char *argv[]) {
+    size_t total_len = 1; // '\0'
+
+    for (int arg = arg_start; arg < argc; arg++) {
+        total_len += strlen(argv[arg]);
+    }
+
+    char *result = malloc(total_len);
+    if (!result) {
+        return NULL;
+    }
+
+    char *p = result;
+
+    for (int arg = arg_start; arg < argc; arg++) {
+        size_t len = strlen(argv[arg]);
+        memcpy(p, argv[arg], len);
+        p += len;
+    }
+
+    *p = '\0';
+
+    return result;
 }

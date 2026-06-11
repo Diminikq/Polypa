@@ -49,12 +49,10 @@ void term_rst(term_t *trm);
 void inv_seq_err(const char *seq, int pos);
 
 /**
- * @brief initializes a polynom_t to zero polynomial
- * poly.capacity = 1, poly.coeffs[0] = 0
+ * @brief initializes a polynom_t
  * @param poly polynom
- * @return 1 on success, else 0
  */
-int poly_init(polynom_t *poly);
+void poly_init(polynom_t *poly);
 
 /**
  * @brief initializes a polynom_t according to max degree in string

@@ -29,16 +29,10 @@ int sign_mul(char c) {
 }
 
 // allocate a polynomial
-// empty polynomial is the zero polynomial
-// 0x^0, size (capacity) 1
-int poly_init(polynom_t *poly) {
-    if (!poly) return 0;
-
-    poly->coeffs = calloc(1, sizeof(int));
-    if (!poly->coeffs) return 0;
-
-    poly->capacity = 1;
-    return 1;
+void poly_init(polynom_t *poly) {
+    if (!poly) return;
+    poly->coeffs = NULL;
+    poly->capacity = 0;
 }
 
 int poly_maxpow_init(polynom_t *poly, const char * const poly_s) {
