@@ -101,6 +101,8 @@ int try_extract_root(polynom_t *current, int d, size_t *mult) {
     if (mult)
         *mult = multiplic;
 
+    // shrink the result to avoid printing zeroes without realloc
+    current->capacity -= multiplic;
     div_res_free(&divtmp);
     return 1;
 
@@ -152,8 +154,8 @@ int horner_factor(const polynom_t *poly,
     }
 
     poly_copy(&fact->remainder, &current);
-    // shrink the result to avoid printing zeroes without realloc
-    fact->remainder.capacity = current.capacity - multiplic;
+
+    fact->remainder.capacity = current.capacity;
 
     poly_free(&current);
     return 1;

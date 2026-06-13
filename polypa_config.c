@@ -219,7 +219,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
             if (config->zero_flag) {
                 FIRST_PRINT_ENDLINE(is_first_print);
                 if (config->verbose_flag) {
-                    printf("P(x) = 0 <=> forall x (zero polynomial)\n");
+                    printf("P(%c) = 0 <=> forall %c (zero polynomial)\n", var, var);
                 }
 
                 else {
@@ -312,7 +312,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
         }
 
         if (config->verbose_flag) {
-            printf("P(x) = 0 <=> x = ");
+            printf("P(%c) = 0 <=> %c = ", var, var);
         }
 
         // else print all roots
