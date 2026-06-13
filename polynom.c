@@ -112,11 +112,18 @@ int poly_resize_write(polynom_t *poly, term_t *term) {
 int poly_copy(polynom_t *dst, const polynom_t *src) {
     if (!dst || !src) return 0;
     
+    // Ensure destination buffer is physically big enough to hold the source data
     if (dst->capacity < src->capacity) return 0;
 
-
-    for (size_t i = 0; i < src->capacity; i++)
+    // Copy the elements
+    for (size_t i = 0; i < src->capacity; i++) {
         dst->coeffs[i] = src->coeffs[i];
+    }
+
+    // Zero out the rest of the destination array so old data doesn't bleed into future math!
+    for (size_t i = src->capacity; i < dst->capacity; i++) {
+        dst->coeffs[i] = 0;
+    }
 
     return 1;
 }
@@ -159,7 +166,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 return 1;
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }
@@ -207,7 +214,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 term_rst(&term);
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }
@@ -240,7 +247,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 return 1;
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }
@@ -275,7 +282,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 term.coeff = 1;
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }
@@ -317,7 +324,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 term.sign *= sign_mul(c);
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }
@@ -336,7 +343,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 next_state = STATE_VAR;
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }
@@ -352,7 +359,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 term.pow = CONV_DIGIT(c);
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }
@@ -366,7 +373,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 next_state = STATE_POW_2ASTRX;
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }
@@ -382,7 +389,7 @@ int parse_polynom(const char * const polynom_s, polynom_t *poly) {
                 term.pow = CONV_DIGIT(c);
             }
 
-            else {
+            else if (!isspace(c)) {
                 inv_seq_err(polynom_s, pos);
                 return 0;
             }

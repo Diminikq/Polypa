@@ -24,11 +24,13 @@ void config_init(config_t *config) {
     config->verbose_flag = false;
     config->asc_order = false;
 
+    config->action_cnt = 0;
+
     config->poly = NULL;
 }
 
 void help_print(void) {
-    printf("Usage: ./polypa [flag] [value] -- polynomial\n");
+    printf("Usage: ./polypa [operation] [value] [modifiers] -- polynomial\n");
     printf(
         "-e [value] = evaluate polynomial at value\n"
         "-d [value] = divide polynomial by (x-value) linear term\n"
@@ -51,6 +53,7 @@ int configure(config_t *config, int argc, const char *argv[]) {
 
         case OPT_PARSE:
             config->parse_flag = true;
+            config->action_cnt++;
             break;
         
         case OPT_EVAL:
@@ -65,10 +68,12 @@ int configure(config_t *config, int argc, const char *argv[]) {
                 fprintf(stderr, "Not INT: %s\n", argv[arg]);
                 return 0;
             }
+            config->action_cnt++;
             break;
 
         case OPT_ZERO:
             config->zero_flag = true;
+            config->action_cnt++;
             break;
 
         case OPT_DIVIDE:
@@ -83,10 +88,12 @@ int configure(config_t *config, int argc, const char *argv[]) {
                 fprintf(stderr, "Not INT: %s\n", argv[arg]);
                 return 0;
             }
+            config->action_cnt++;
             break;
 
         case OPT_FACTOR:
             config->factor_flag = true;
+            config->action_cnt++;
             break;
         
         case OPT_HELP:
@@ -131,19 +138,29 @@ int configure(config_t *config, int argc, const char *argv[]) {
 int exec_opts(config_t *config, polynom_t *poly) {
     if (!config || !poly) return 0;
 
+    if (config->action_cnt > 1) return -1;
+
+    bool is_first_print = true;
+
     // the first variable is the only one
     // else parser error earlier
     char var = first_variable_used(config->poly);
     
 
     if (config->parse_flag) {
-        printf("\n");
-        print_polynom(poly, '\0', config->asc_order);
+        FIRST_PRINT_ENDLINE(is_first_print);
+        if (config->verbose_flag) {
+            print_polynom(poly, var, config->asc_order);
+        }
+
+        else {
+            print_polynom(poly, '\0', config->asc_order);
+        }
         printf("\n");
     }
 
     if (config->eval_flag) {
-        printf("\n");
+        FIRST_PRINT_ENDLINE(is_first_print);
         if (config->verbose_flag) {
             printf("P(%d) = ", config->eval_val);
         }
@@ -152,6 +169,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
     }
 
     if (config->divide_flag) {
+        FIRST_PRINT_ENDLINE(is_first_print);
         div_result_t res;
 
         if (!div_res_alloc(poly->capacity, &res)) {
@@ -159,7 +177,6 @@ int exec_opts(config_t *config, polynom_t *poly) {
             return 0;
         }
 
-        printf("\n");
         horner_divide(poly, config->divide_val, &res);
 
         if (config->verbose_flag) {
@@ -189,6 +206,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
         if (is_zero_polynomial(poly)) {
 
             if (config->factor_flag) {
+                FIRST_PRINT_ENDLINE(is_first_print);
                 if (config->verbose_flag) {
                     printf("Zero polynomial: all divide it\n");
                 }
@@ -199,6 +217,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
             }
 
             if (config->zero_flag) {
+                FIRST_PRINT_ENDLINE(is_first_print);
                 if (config->verbose_flag) {
                     printf("P(x) = 0 <=> forall x (zero polynomial)\n");
                 }
@@ -244,7 +263,7 @@ int exec_opts(config_t *config, polynom_t *poly) {
 
         if (config->factor_flag) {
 
-            printf("\n");
+            FIRST_PRINT_ENDLINE(is_first_print);
 
             if (config->verbose_flag) {
                 print_polynom_verbose(poly, var, config->asc_order);
@@ -274,13 +293,12 @@ int exec_opts(config_t *config, polynom_t *poly) {
                 printf(")");
             }
             printf("\n");
-            printf("\n");
         
         }
 
         if (config->zero_flag) {
 
-            printf("\n");
+            FIRST_PRINT_ENDLINE(is_first_print);
 
             if (res.root_pairs.root_pairs_size == 0) {
 

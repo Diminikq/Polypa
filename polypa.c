@@ -12,9 +12,6 @@
 
 /* todo:
 
-    space is treated as error in parser, fix
-
-    static bool first print
 */
 int main(int argc, const char *argv[]){
 
@@ -40,10 +37,16 @@ int main(int argc, const char *argv[]){
 
     if (!parse_polynom(config.poly, &poly)) goto m_error;
 
-    if (!exec_opts(&config, &poly)) {
+    int exec_out = exec_opts(&config, &poly);
+    if (exec_out == -1) {
+        fprintf(stderr, "Only one operation (-p, -e, -d, -z, -f) per run\n");
+        goto m_error;
+    }
+    else if (exec_out == 0) {
         fprintf(stderr, "Error executing options\n");
         goto m_error;
     }
+    
 
     goto m_exit;
 

@@ -89,15 +89,15 @@ int try_extract_root(polynom_t *current, int d, size_t *mult) {
         if (!horner_divide(current, d, &divtmp))
             goto error;
 
+            
         if (divtmp.remainder != 0)
             break;
-        
         poly_copy(current, &divtmp.quotient);
-        current->capacity--;
+        
         ++multiplic;
         
     }
-
+    
     if (mult)
         *mult = multiplic;
 
@@ -117,6 +117,8 @@ int horner_factor(const polynom_t *poly,
     if (!poly || !candidates || !fact)
         return 0;
 
+    size_t multiplic;
+
     polynom_t current;
     if (!poly_alloc(&current, poly->capacity))
         return 0;
@@ -126,7 +128,7 @@ int horner_factor(const polynom_t *poly,
     for (size_t i = 0; i < candidates->size; ++i) {
 
         int div = candidates->data[i];
-        size_t multiplic;
+        multiplic = 0;
 
         if (!try_extract_root(&current, div, &multiplic))
             goto error;
@@ -151,7 +153,7 @@ int horner_factor(const polynom_t *poly,
 
     poly_copy(&fact->remainder, &current);
     // shrink the result to avoid printing zeroes without realloc
-    fact->remainder.capacity = current.capacity;
+    fact->remainder.capacity = current.capacity - multiplic;
 
     poly_free(&current);
     return 1;

@@ -9,6 +9,17 @@
 #include "polynom.h"
 #include "horner.h"
 
+// if the first output line is being printed,
+// dont print a newline first
+#define FIRST_PRINT_ENDLINE(f) do { \
+    if (f) { \
+        f = false; \
+    } \
+    else { \
+        printf("\n"); \
+    } \
+} while (0);
+
 enum options {
     OPT_EVAL,
     OPT_PARSE,
@@ -35,6 +46,9 @@ typedef struct {
     bool zero_flag;
     bool factor_flag;
     bool verbose_flag;
+
+    // to limit the number of actions
+    int action_cnt;
 
     char *poly;
 } config_t;
