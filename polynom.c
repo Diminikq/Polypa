@@ -533,16 +533,7 @@ void print_polynom(polynom_t *poly, char var, bool ascd_order) {
 
     if (ascd_order) {
         if (isalpha(var)) {
-
-            printf("(");
-            // cap - 1 because the last term is not followed by +
-            for (size_t idx = 0; idx < poly->capacity; idx ++) {
-                
-                printf("%d%c^%zu", poly->coeffs[idx], var, idx);
-                if (idx < poly->capacity - 1) printf(" + ");
-            }
-            printf(")");
-
+            print_polynom_verbose(poly, var, ascd_order);
         }
 
         else {
@@ -556,13 +547,7 @@ void print_polynom(polynom_t *poly, char var, bool ascd_order) {
 
     else {
         if (isalpha(var)) {
-            printf("(");
-            for (size_t idx = poly->capacity; idx > 0; idx --) {
-
-                printf("%d%c^%zu", poly->coeffs[idx - 1], var, idx - 1);
-                if (idx > 1) printf(" + ");
-            }
-            printf(")");
+            print_polynom_verbose(poly, var, ascd_order);
         }
 
         else {
@@ -580,4 +565,60 @@ char first_variable_used(const char * s) {
     while ((c = *s++) != '\0' && !isalpha(c));
     if (c == '\0') return 'x';
     return c;
+}
+
+void print_polynom_verbose(polynom_t *poly, char var, bool ascd_order) {
+    if (poly == NULL || poly->coeffs == NULL || poly->capacity == 0) {
+        printf("0\n");
+        return;
+    }
+
+    bool is_first = true;
+
+    // Loop through the coefficients based on the desired order
+    for (size_t i = 0; i < poly->capacity; i++) {
+        // If ascending, we go 0 to capacity-1. If descending, we go capacity-1 down to 0.
+        size_t power = ascd_order ? i : (poly->capacity - 1 - i);
+        int coeff = poly->coeffs[power];
+
+        // Skip zero terms
+        if (coeff == 0) {
+            continue;
+        }
+
+        // 1. Handle the sign and spacing
+        if (is_first) {
+            if (coeff < 0) {
+                printf("-");
+                coeff = -coeff; // Make it positive for printing
+            }
+            is_first = false;
+        } else {
+            if (coeff > 0) {
+                printf(" + ");
+            } else {
+                printf(" - ");
+                coeff = -coeff; // Make it positive for printing
+            }
+        }
+
+        // 2. Handle the coefficient value
+        // Only skip printing the number '1' if there is actually a variable attaching to it
+        if (coeff != 1 || power == 0) {
+            printf("%d", coeff);
+        }
+
+        // 3. Handle the variable and power
+        if (power > 0) {
+            printf("%c", var);
+            if (power > 1) {
+                printf("^%zu", power);
+            }
+        }
+    }
+
+    // Edge case: If the polynomial was entirely zeros (e.g., 0x^2 + 0x + 0)
+    if (is_first) {
+        printf("0");
+    }
 }

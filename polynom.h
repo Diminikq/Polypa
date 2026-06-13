@@ -78,6 +78,7 @@ bool is_zero_polynomial(const polynom_t *poly);
 
 void print_linear(int val, char var);
 void print_polynom(polynom_t *poly, char var, bool ascd_order);
+void print_polynom_verbose(polynom_t *poly, char var, bool ascd_order);
 char first_variable_used(const char * s);
 
 #endif
